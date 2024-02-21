@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.SQLOutput;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/course")
@@ -27,11 +28,20 @@ public class CourseController {
         this.lessonService = lessonService;
     }
     @GetMapping("/")
-    public ResponseEntity<List<Course>> courseIndex(){
-        return new ResponseEntity<>(courseService.getAllCourses(), HttpStatus.OK);
+    public ResponseEntity<List<CourseDTO>> courseIndex(){
+        List<Course> courses = courseService.getAllCourses();
+
+        List<CourseDTO> responseCourses = courses.stream().map(
+                (course) -> {
+                    CourseDTO responseCourse = new CourseDTO(course.getIdentifier() , course.getTitle(), course.getTeacher());
+                    responseCourse.setLessons(lessonService.findLessonsByCourseIdentifier(course.getIdentifier()));
+                    return responseCourse;
+                }
+        ).collect(Collectors.toList());
+
+        return new ResponseEntity<>(responseCourses, HttpStatus.OK);
     }
     @GetMapping("/{identifier}")
-
     public ResponseEntity<CourseDTO> courseDetails(@PathVariable String identifier){
         Course course = courseService.getCourseByIdentifier(identifier);
 
